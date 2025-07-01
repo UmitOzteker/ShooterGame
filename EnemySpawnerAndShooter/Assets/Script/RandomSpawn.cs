@@ -10,60 +10,162 @@ public class RandomSpawn : MonoBehaviour
 
     private Vector3 planeSize;
     private float spawnTimer = 0f;
-    private int spawnedCubeCount = 0;
     private List<Vector3> spawnedPositions = new List<Vector3>();
 
-    private float spawnInterval = 5f;    // 5 saniyede bir spawn 
-    private float minSpawnDistance = 5f; // En az 5 birim uza�a spawn
-    private int maxCubeCount = 15;       // Maksimum Enemy say�s�
-    private float minDistanceBetweenCubes = 2f; 
-    private bool tooClose = false;
+    private float spawnInterval = 5f;    // 5 saniyede bir spawn
+    private float minSpawnDistance = 5f; // En az 5 birim uzağa spawn
+    private int maxCubeCount = 15;       // Maksimum Enemy sayısı
+    private float minDistanceBetweenCubes = 2f;
+    
+    // Güvenlik için maksimum deneme sayısı
+    private int maxSpawnAttempts = 50;
 
     void Start()
     {
-        planeSize = plane.GetComponent<MeshRenderer>().bounds.size;
+        if (plane != null)
+        {
+            planeSize = plane.GetComponent<MeshRenderer>().bounds.size;
+        }
+        else
+        {
+            Debug.LogError("Plane GameObject atanmamış!");
+        }
+
+        // Player otomatik bul
+        if (player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                player = playerObj.transform;
+            }
+            else
+            {
+                Debug.LogError("Player bulunamadı!");
+            }
+        }
     }
 
     void Update()
     {
         spawnTimer += Time.deltaTime;
 
-        if (spawnTimer >= spawnInterval && spawnedCubeCount < maxCubeCount)
+        // Null check ekle
+        if (PlayerMovement.EnemyList == null)
+        {
+            Debug.LogError("PlayerMovement.EnemyList null!");
+            return;
+        }
+
+        // Aktif düşman sayısını kontrol et (null olanları say)
+        int activeEnemyCount = 0;
+        for (int i = PlayerMovement.EnemyList.Count - 1; i >= 0; i--)
+        {
+            if (PlayerMovement.EnemyList[i] == null)
+            {
+                PlayerMovement.EnemyList.RemoveAt(i);
+            }
+            else
+            {
+                activeEnemyCount++;
+            }
+        }
+
+        if (spawnTimer >= spawnInterval && activeEnemyCount < maxCubeCount)
         {
             Vector3 randomSpawnPosition = GetValidSpawnPosition();
 
             if (randomSpawnPosition != Vector3.zero) // Uygun pozisyon bulunduysa
             {
-                Instantiate(cubePrefab, randomSpawnPosition, Quaternion.identity);
-                spawnedCubeCount++;
-                spawnTimer = 0f;
+                GameObject newEnemy = Instantiate(cubePrefab, randomSpawnPosition, Quaternion.identity);
+                
+                // Null check
+                if (newEnemy != null)
+                {
+                    PlayerMovement.AddEnemy(newEnemy);
+                    spawnedPositions.Add(randomSpawnPosition);
+                    spawnTimer = 0f;
+                    
+                    Debug.Log($"Düşman spawn edildi. Toplam: {activeEnemyCount + 1}");
+                }
             }
         }
+        
+        CleanUpDeadEnemyPositions(); // Ölen Düşman Pozisyonlarının Temizlenmesi
     }
 
     private Vector3 GetValidSpawnPosition()
     {
-       
+        // Player null kontrolü
+        if (player == null) return Vector3.zero;
+
+        // Maksimum deneme sayısı ile sonsuz döngüyü engelle
+        for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
+        {
             float x = Random.Range(-planeSize.x / 2, planeSize.x / 2);
             float z = Random.Range(-planeSize.z / 2, planeSize.z / 2);
             Vector3 spawnPos = new Vector3(x, 1, z);
 
-        foreach (var pos in spawnedPositions)
-        {
-            if (Vector3.Distance(spawnPos, pos) < minDistanceBetweenCubes)
+            // Player'dan uzaklık kontrolü
+            if (Vector3.Distance(spawnPos, player.position) < minSpawnDistance)
             {
-                tooClose = true;
-                break;
+                continue; // Bu pozisyon çok yakın, tekrar dene
             }
-        }
 
-        if (Vector3.Distance(spawnPos, player.position) >= minSpawnDistance && !tooClose)
+            // Diğer düşmanlardan uzaklık kontrolü
+            bool tooClose = false;
+            foreach (var pos in spawnedPositions)
+            {
+                if (Vector3.Distance(spawnPos, pos) < minDistanceBetweenCubes)
+                {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            // Aktif düşmanlardan uzaklık kontrolü
+            if (!tooClose && PlayerMovement.EnemyList != null)
+            {
+                foreach (GameObject enemy in PlayerMovement.EnemyList)
+                {
+                    if (enemy != null && Vector3.Distance(spawnPos, enemy.transform.position) < minDistanceBetweenCubes)
+                    {
+                        tooClose = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!tooClose)
             {
                 return spawnPos;
             }
+        }
 
-        
+        return Vector3.zero; // Uygun pozisyon bulunamazsa
+    }
 
-        return Vector3.zero; // Uygun pozisyon bulunamazsa spawn yapma
+    private void CleanUpDeadEnemyPositions()
+    {
+        if (PlayerMovement.EnemyList == null) return;
+
+        for (int i = spawnedPositions.Count - 1; i >= 0; i--)
+        {
+            bool foundActiveEnemy = false;
+            
+            foreach (GameObject enemy in PlayerMovement.EnemyList)
+            {
+                if (enemy != null && Vector3.Distance(enemy.transform.position, spawnedPositions[i]) < 1f)
+                {
+                    foundActiveEnemy = true;
+                    break;
+                }
+            }
+
+            if (!foundActiveEnemy)
+            {
+                spawnedPositions.RemoveAt(i);
+            }
+        }
     }
 }
