@@ -4,43 +4,74 @@ using UnityEngine;
 
 public class Tower : MonoBehaviour
 {
-    [SerializeField] private Camera PlayerCamera; // Oyuncu kamerasını Inspector'dan sürükleyip bırakın
-    [SerializeField] private GameObject selectedTowerPrefab; // Yerleştirilecek kule prefab'ı, bunu Inspector'dan atayın
-    
-    // Enemy targeting variables
-    public GameObject NearestEnemy;
+    [SerializeField]
+    private Camera PlayerCamera;
+
+    [SerializeField]
+    private GameObject selectedTowerPrefab;
     float nearestDistance = 10000;
-    
-    // Not: CurrentPlacingTower değişkeni, eğer kuleyi seçip anında bir "hayalet" (ghost) nesne gibi
-    // fareyle gezdirmek isterseniz kullanışlıdır. Basit yerleştirme için gerek yok.
-    // private GameObject CurrentPlacingTower;
+
+    [SerializeField]
+    Currency currencyScript;
 
     void Update()
     {
-        // Eğer yerleştirilecek bir kule prefab'ı atanmamışsa, uyarı ver ve çık
         if (selectedTowerPrefab == null)
         {
-            Debug.LogWarning("Yerleştirilecek kule prefab'ı 'selectedTowerPrefab' değişkenine atanmamış!");
-            return; // Update döngüsünden çık
+            Debug.LogWarning(
+                "Yerleştirilecek kule prefab'ı 'selectedTowerPrefab' değişkenine atanmamış!"
+            );
+            return;
         }
 
-        // Sağ tık algıla
         if (Input.GetMouseButtonDown(1))
         {
-            // Kamera konumundan farenin olduğu noktaya bir ışın (ray) oluştur
-            Ray camRay = PlayerCamera.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hitInfo; // Işının çarptığı yerin bilgilerini tutacak değişken
+            // Mevcut para miktarını al
+            int currentMoney = 0;
 
-            // Işın bir şeye çarptıysa (örneğin zemin)
+            if (currencyScript != null)
+            {
+                currentMoney = currencyScript.GetBloodMoneyAmount();
+            }
+            else
+            {
+                Currency foundCurrency = FindObjectOfType<Currency>();
+                if (foundCurrency != null)
+                {
+                    currentMoney = foundCurrency.GetBloodMoneyAmount();
+                }
+            }
+
+            // Para kontrolü
+            if (currentMoney < 50)
+            {
+                Debug.Log("Kule koymak için yeterli para yok! (50 BloodMoney gerekli)");
+                return;
+            }
+
+            // Para yeterliyse raycast yap
+            Ray camRay = PlayerCamera.ScreenPointToRay(Input.mousePosition);
+
+            RaycastHit hitInfo;
             if (Physics.Raycast(camRay, out hitInfo, 100f))
             {
-                // Y pozisyonunu biraz yukarı kaydır ki kule yerin içinde doğmasın
-                Vector3 spawnPosition = hitInfo.point + Vector3.up * 0.5f; // 0.5 birim yukarı
-                
-                // Sağ tıklandığında, fare imlecinin baktığı yere kuleyi oluştur
-                // Quaternion.identity, kulenin dönme açısını sıfır (orijinal) olarak ayarlar
+                Vector3 spawnPosition = hitInfo.point + Vector3.up * 0.5f;
                 Instantiate(selectedTowerPrefab, spawnPosition, Quaternion.identity);
                 Debug.Log("Kule yerleştirildi: " + spawnPosition);
+
+                // Parayı azalt
+                if (currencyScript != null)
+                {
+                    currencyScript.DecreaseBloodMoneyAmount(50);
+                }
+                else
+                {
+                    Currency foundCurrency = FindObjectOfType<Currency>();
+                    if (foundCurrency != null)
+                    {
+                        foundCurrency.DecreaseBloodMoneyAmount(50);
+                    }
+                }
             }
             else
             {

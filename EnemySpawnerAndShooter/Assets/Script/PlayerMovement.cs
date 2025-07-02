@@ -5,15 +5,16 @@ using UnityEngine.AI;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private NavMeshAgent _agent = null;
-    public static List<GameObject> EnemyList = new List<GameObject>();
-    public static GameObject NearestEnemy;
+    [SerializeField]
+    private NavMeshAgent _agent = null;
+    public GameObject NearestEnemy;
     float distance;
     float nearestDistance = 10000;
+
     // Start is called before the first frame update
     void Start()
     {
-        findNearestEnemy();
+        NearestEnemy = EnemyManager.findNearestEnemy(transform.position);
     }
 
     // Update is called once per frame
@@ -28,7 +29,7 @@ public class PlayerMovement : MonoBehaviour
                 _agent.SetDestination(hit.point);
             }
         }
-        findNearestEnemy();
+        NearestEnemy = EnemyManager.findNearestEnemy(transform.position);
         if (NearestEnemy != null)
         {
             Vector3 lookPos = new Vector3(
@@ -41,56 +42,14 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void findNearestEnemy()
-    {
-        CleanupNullEnemies();
-
-        nearestDistance = Mathf.Infinity;
-
-        if (EnemyList.Count == 0)
-        {
-            NearestEnemy = null;
-            return;
-        }
-
-        GameObject nearest = null;
-
-        for (int i = 0; i < EnemyList.Count; i++)
-        {
-            float distance = Vector3.Distance(this.transform.position, EnemyList[i].transform.position);
-
-            if (distance < nearestDistance)
-            {
-                nearestDistance = distance;
-                NearestEnemy = EnemyList[i];
-            }
-        }
-    }
-
-
     private void CleanupNullEnemies()
     {
-        for (int i = EnemyList.Count - 1; i >= 0; i--)
+        for (int i = RandomSpawn.EnemyList.Count - 1; i >= 0; i--)
         {
-            if (EnemyList[i] == null)
+            if (RandomSpawn.EnemyList[i] == null)
             {
-                EnemyList.RemoveAt(i);
+                RandomSpawn.EnemyList.RemoveAt(i);
             }
         }
     }
-
-    public static void AddEnemy(GameObject enemy)
-    {
-        if (!EnemyList.Contains(enemy))
-        {
-            EnemyList.Add(enemy);
-        }
-    }
-
-    // Düşman öldüğünde çağrılacak
-    public static void RemoveEnemy(GameObject enemy)
-    {
-        EnemyList.Remove(enemy);
-    }
 }
-

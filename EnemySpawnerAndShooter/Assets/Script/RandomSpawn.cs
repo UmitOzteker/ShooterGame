@@ -11,12 +11,14 @@ public class RandomSpawn : MonoBehaviour
     private Vector3 planeSize;
     private float spawnTimer = 0f;
     private List<Vector3> spawnedPositions = new List<Vector3>();
+    public static List<GameObject> EnemyList = new List<GameObject>();
+
 
     private float spawnInterval = 5f;    // 5 saniyede bir spawn
     private float minSpawnDistance = 5f; // En az 5 birim uzağa spawn
     private int maxCubeCount = 15;       // Maksimum Enemy sayısı
     private float minDistanceBetweenCubes = 2f;
-    
+
     // Güvenlik için maksimum deneme sayısı
     private int maxSpawnAttempts = 50;
 
@@ -51,19 +53,19 @@ public class RandomSpawn : MonoBehaviour
         spawnTimer += Time.deltaTime;
 
         // Null check ekle
-        if (PlayerMovement.EnemyList == null)
+        if (EnemyList == null)
         {
-            Debug.LogError("PlayerMovement.EnemyList null!");
+            Debug.LogError("EnemyList null!");
             return;
         }
 
         // Aktif düşman sayısını kontrol et (null olanları say)
         int activeEnemyCount = 0;
-        for (int i = PlayerMovement.EnemyList.Count - 1; i >= 0; i--)
+        for (int i = EnemyList.Count - 1; i >= 0; i--)
         {
-            if (PlayerMovement.EnemyList[i] == null)
+            if (EnemyList[i] == null)
             {
-                PlayerMovement.EnemyList.RemoveAt(i);
+                EnemyList.RemoveAt(i);
             }
             else
             {
@@ -78,19 +80,19 @@ public class RandomSpawn : MonoBehaviour
             if (randomSpawnPosition != Vector3.zero) // Uygun pozisyon bulunduysa
             {
                 GameObject newEnemy = Instantiate(cubePrefab, randomSpawnPosition, Quaternion.identity);
-                
+
                 // Null check
                 if (newEnemy != null)
                 {
-                    PlayerMovement.AddEnemy(newEnemy);
+                    AddEnemy(newEnemy);
                     spawnedPositions.Add(randomSpawnPosition);
                     spawnTimer = 0f;
-                    
+
                     Debug.Log($"Düşman spawn edildi. Toplam: {activeEnemyCount + 1}");
                 }
             }
         }
-        
+
         CleanUpDeadEnemyPositions(); // Ölen Düşman Pozisyonlarının Temizlenmesi
     }
 
@@ -124,9 +126,9 @@ public class RandomSpawn : MonoBehaviour
             }
 
             // Aktif düşmanlardan uzaklık kontrolü
-            if (!tooClose && PlayerMovement.EnemyList != null)
+            if (!tooClose && EnemyList != null)
             {
-                foreach (GameObject enemy in PlayerMovement.EnemyList)
+                foreach (GameObject enemy in EnemyList)
                 {
                     if (enemy != null && Vector3.Distance(spawnPos, enemy.transform.position) < minDistanceBetweenCubes)
                     {
@@ -147,13 +149,13 @@ public class RandomSpawn : MonoBehaviour
 
     private void CleanUpDeadEnemyPositions()
     {
-        if (PlayerMovement.EnemyList == null) return;
+        if (EnemyList == null) return;
 
         for (int i = spawnedPositions.Count - 1; i >= 0; i--)
         {
             bool foundActiveEnemy = false;
-            
-            foreach (GameObject enemy in PlayerMovement.EnemyList)
+
+            foreach (GameObject enemy in EnemyList)
             {
                 if (enemy != null && Vector3.Distance(enemy.transform.position, spawnedPositions[i]) < 1f)
                 {
@@ -167,5 +169,18 @@ public class RandomSpawn : MonoBehaviour
                 spawnedPositions.RemoveAt(i);
             }
         }
+    }
+      public static void AddEnemy(GameObject enemy)
+    {
+        if (!EnemyList.Contains(enemy))
+        {
+            EnemyList.Add(enemy);
+        }
+    }
+
+    // Düşman öldüğünde çağrılacak
+    public static void RemoveEnemy(GameObject enemy)
+    {
+        EnemyList.Remove(enemy);
     }
 }

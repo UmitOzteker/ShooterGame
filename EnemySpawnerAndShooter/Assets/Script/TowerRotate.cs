@@ -4,20 +4,20 @@ using UnityEngine;
 
 public class TowerRotate : MonoBehaviour
 {
-
     public GameObject NearestEnemy;
     float distance;
     float nearestDistance = 10000;
+
     // Start is called before the first frame update
     void Start()
     {
-        findNearestEnemy();
+        NearestEnemy = EnemyManager.findNearestEnemy(transform.position);
     }
 
     // Update is called once per frame
     void Update()
     {
-        findNearestEnemy();
+        NearestEnemy = EnemyManager.findNearestEnemy(transform.position);
         if (NearestEnemy != null)
         {
             Vector3 lookPos = new Vector3(
@@ -27,29 +27,6 @@ public class TowerRotate : MonoBehaviour
             );
 
             transform.LookAt(lookPos);
-        }
-    }
-    public void findNearestEnemy()
-    {
-        nearestDistance = Mathf.Infinity;
-
-        if (PlayerMovement.EnemyList.Count == 0)
-        {
-            NearestEnemy = null;
-            return;
-        }
-
-        GameObject nearest = null;
-
-        for (int i = 0; i < PlayerMovement.EnemyList.Count; i++)
-        {
-            float distance = Vector3.Distance(this.transform.position, PlayerMovement.EnemyList[i].transform.position);
-
-            if (distance < nearestDistance)
-            {
-                nearestDistance = distance;
-                NearestEnemy = PlayerMovement.EnemyList[i];
-            }
         }
     }
 }
