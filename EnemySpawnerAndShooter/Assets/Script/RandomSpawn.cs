@@ -13,10 +13,9 @@ public class RandomSpawn : MonoBehaviour
     private List<Vector3> spawnedPositions = new List<Vector3>();
     public static List<GameObject> EnemyList = new List<GameObject>();
 
-
-    private float spawnInterval = 5f;    // 5 saniyede bir spawn
+    private float spawnInterval = 5f; // 5 saniyede bir spawn
     private float minSpawnDistance = 5f; // En az 5 birim uzağa spawn
-    private int maxCubeCount = 15;       // Maksimum Enemy sayısı
+    private int maxCubeCount = 15; // Maksimum Enemy sayısı
     private float minDistanceBetweenCubes = 2f;
 
     // Güvenlik için maksimum deneme sayısı
@@ -79,9 +78,12 @@ public class RandomSpawn : MonoBehaviour
 
             if (randomSpawnPosition != Vector3.zero) // Uygun pozisyon bulunduysa
             {
-                GameObject newEnemy = Instantiate(cubePrefab, randomSpawnPosition, Quaternion.identity);
+                GameObject newEnemy = Instantiate(
+                    cubePrefab,
+                    randomSpawnPosition,
+                    Quaternion.identity
+                );
 
-                // Null check
                 if (newEnemy != null)
                 {
                     AddEnemy(newEnemy);
@@ -99,7 +101,8 @@ public class RandomSpawn : MonoBehaviour
     private Vector3 GetValidSpawnPosition()
     {
         // Player null kontrolü
-        if (player == null) return Vector3.zero;
+        if (player == null)
+            return Vector3.zero;
 
         // Maksimum deneme sayısı ile sonsuz döngüyü engelle
         for (int attempt = 0; attempt < maxSpawnAttempts; attempt++)
@@ -130,7 +133,11 @@ public class RandomSpawn : MonoBehaviour
             {
                 foreach (GameObject enemy in EnemyList)
                 {
-                    if (enemy != null && Vector3.Distance(spawnPos, enemy.transform.position) < minDistanceBetweenCubes)
+                    if (
+                        enemy != null
+                        && Vector3.Distance(spawnPos, enemy.transform.position)
+                            < minDistanceBetweenCubes
+                    )
                     {
                         tooClose = true;
                         break;
@@ -149,7 +156,8 @@ public class RandomSpawn : MonoBehaviour
 
     private void CleanUpDeadEnemyPositions()
     {
-        if (EnemyList == null) return;
+        if (EnemyList == null)
+            return;
 
         for (int i = spawnedPositions.Count - 1; i >= 0; i--)
         {
@@ -157,7 +165,10 @@ public class RandomSpawn : MonoBehaviour
 
             foreach (GameObject enemy in EnemyList)
             {
-                if (enemy != null && Vector3.Distance(enemy.transform.position, spawnedPositions[i]) < 1f)
+                if (
+                    enemy != null
+                    && Vector3.Distance(enemy.transform.position, spawnedPositions[i]) < 1f
+                )
                 {
                     foundActiveEnemy = true;
                     break;
@@ -170,7 +181,8 @@ public class RandomSpawn : MonoBehaviour
             }
         }
     }
-      public static void AddEnemy(GameObject enemy)
+
+    public static void AddEnemy(GameObject enemy)
     {
         if (!EnemyList.Contains(enemy))
         {

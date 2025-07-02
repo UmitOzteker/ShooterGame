@@ -1,88 +1,114 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Tower : MonoBehaviour
 {
     [SerializeField]
-    private Camera PlayerCamera;
+    private Camera playerCamera;
 
     [SerializeField]
-    private GameObject selectedTowerPrefab;
-    float nearestDistance = 10000;
+    private TowerData selectedTowerData;
 
     [SerializeField]
-    Currency currencyScript;
+    private Currency currencyScript;
+
+    private Vector3 clickedPosition;
+    private Vector2 clickedScreenPosition;
 
     void Update()
     {
-        if (selectedTowerPrefab == null)
+        if (selectedTowerData == null)
         {
-            Debug.LogWarning(
-                "Yerleştirilecek kule prefab'ı 'selectedTowerPrefab' değişkenine atanmamış!"
-            );
+            Debug.LogWarning("Yerleştirilecek kule prefab atanmadı.");
             return;
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(0))
         {
-            // Mevcut para miktarını al
-            int currentMoney = 0;
+            Debug.Log("Sol tıklama algılandı.");
 
-            if (currencyScript != null)
+            if (EventSystem.current.IsPointerOverGameObject())
             {
-                currentMoney = currencyScript.GetBloodMoneyAmount();
-            }
-            else
-            {
-                Currency foundCurrency = FindObjectOfType<Currency>();
-                if (foundCurrency != null)
-                {
-                    currentMoney = foundCurrency.GetBloodMoneyAmount();
-                }
-            }
-
-            // Para kontrolü
-            if (currentMoney < 50)
-            {
-                Debug.Log("Kule koymak için yeterli para yok! (50 BloodMoney gerekli)");
+                Debug.Log("Sol tık bir UI öğesi üzerinde yapıldı, popup açılmayacak.");
                 return;
             }
 
-            // Para yeterliyse raycast yap
-            Ray camRay = PlayerCamera.ScreenPointToRay(Input.mousePosition);
-
-            RaycastHit hitInfo;
-            if (Physics.Raycast(camRay, out hitInfo, 100f))
+            if (currencyScript == null)
             {
-                Vector3 spawnPosition = hitInfo.point + Vector3.up * 0.5f;
-                Instantiate(selectedTowerPrefab, spawnPosition, Quaternion.identity);
-                Debug.Log("Kule yerleştirildi: " + spawnPosition);
-
-                // Parayı azalt
-                if (currencyScript != null)
+                currencyScript = FindObjectOfType<Currency>();
+                if (currencyScript == null)
                 {
-                    currencyScript.DecreaseBloodMoneyAmount(50);
+                    Debug.LogError("Currency script sahnede bulunamadı!");
+                    return;
+                }
+            }
+
+            Ray camRay = playerCamera.ScreenPointToRay(Input.mousePosition);
+            Debug.DrawRay(playerCamera.transform.position, camRay.direction * 100f, Color.red, 2f);
+
+            if (Physics.Raycast(camRay, out RaycastHit hitInfo, 100f))
+            {
+                clickedPosition = hitInfo.point;
+                clickedScreenPosition = Input.mousePosition;
+
+                Debug.Log("Raycast başarılı.");
+                Debug.Log($"Tıklanan dünya pozisyonu: {clickedPosition}");
+                Debug.Log($"Tıklanan ekran pozisyonu: {clickedScreenPosition}");
+
+                if (selectedTowerData != null)
+                {
+                    Debug.Log(
+                        $"Seçilen kule: {selectedTowerData.towerName} | Maliyet: {selectedTowerData.cost}"
+                    );
+                }
+
+                if (PopupManager.Instance != null)
+                {
+                    Debug.Log("PopupManager bulundu. Popup açılıyor...");
+                    PopupManager.Instance.OpenTowerPopup(clickedScreenPosition);
                 }
                 else
                 {
-                    Currency foundCurrency = FindObjectOfType<Currency>();
-                    if (foundCurrency != null)
-                    {
-                        foundCurrency.DecreaseBloodMoneyAmount(50);
-                    }
+                    Debug.LogError("PopupManager.Instance bulunamadı. Popup açılamadı.");
                 }
             }
             else
             {
-                Debug.Log("Işın 100 birim içinde hiçbir şeye çarpmadı.");
+                Debug.LogWarning("Raycast hiçbir objeye çarpmadı.");
             }
         }
     }
 
-    public void SetTowerToPlace(GameObject towerPrefabToSet)
+    public void PlaceTower()
     {
-        selectedTowerPrefab = towerPrefabToSet;
-        Debug.Log(towerPrefabToSet.name + " kulesi yerleştirilmek üzere seçildi.");
+        Debug.Log("PlaceTower() fonksiyonu çağrıldı.");
+        int currentMoney = currencyScript.GetBloodMoneyAmount();
+        Debug.Log($"Mevcut para: {currentMoney}, Gerekli: {selectedTowerData.cost}");
+
+        if (currentMoney < selectedTowerData.cost)
+        {
+            Debug.LogWarning(
+                $"Yetersiz para. Gerekli: {selectedTowerData.cost}, Mevcut: {currentMoney}"
+            );
+            return;
+        }
+
+        Vector3 spawnPosition = clickedPosition + Vector3.up * 0.5f;
+        Debug.Log(
+            $"Kule Instantiate ediliyor. Pozisyon: {spawnPosition}, Prefab: {selectedTowerData.prefab.name}"
+        );
+
+        Instantiate(selectedTowerData.prefab, spawnPosition, Quaternion.identity);
+        currencyScript.DecreaseBloodMoneyAmount(selectedTowerData.cost);
+
+        Debug.Log("Kule başarıyla yerleştirildi ve para düşürüldü.");
+    }
+
+    public void SetTowerToPlace(TowerData towerDataToSet)
+    {
+        selectedTowerData = towerDataToSet;
+        Debug.Log(
+            $"{towerDataToSet.towerName} ({towerDataToSet.towerType}) seçildi. Fiyat: {towerDataToSet.cost}"
+        );
     }
 }
