@@ -17,9 +17,10 @@ public class PlayerMovement : MonoBehaviour
         NearestEnemy = EnemyManager.findNearestEnemy(transform.position);
     }
 
+    // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(1))
+        if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
@@ -36,7 +37,19 @@ public class PlayerMovement : MonoBehaviour
                 transform.position.y,
                 NearestEnemy.transform.position.z
             );
+
             transform.LookAt(lookPos);
+        }
+    }
+
+    private void CleanupNullEnemies()
+    {
+        for (int i = RandomSpawn.EnemyList.Count - 1; i >= 0; i--)
+        {
+            if (RandomSpawn.EnemyList[i] == null)
+            {
+                RandomSpawn.EnemyList.RemoveAt(i);
+            }
         }
     }
 }
