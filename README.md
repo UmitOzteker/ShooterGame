@@ -1,9 +1,12 @@
 # ShooterGame ![Unity](https://img.shields.io/badge/Engine-Unity-blue) ![AI](https://img.shields.io/badge/AI-Enabled-green) ![License](https://img.shields.io/github/license/UmitOzteker/ShooterGame)
 
- ![GitHub Total Commits](https://img.shields.io/github/commit-activity/t/UmitOzteker/Labyrinth_Game_Project) 
-  ![GitHub Last Commit](https://img.shields.io/github/last-commit/UmitOzteker/Labyrinth_Game_Project) 
-  ![GitHub Issues](https://img.shields.io/github/issues/UmitOzteker/Labyrinth_Game_Project) 
-  ![Code Size](https://img.shields.io/github/languages/code-size/UmitOzteker/C_Projects)
+![C#](https://img.shields.io/badge/Language-C%23-239120?logo=c-sharp)
+![GitHub Repo](https://img.shields.io/github/repo-size/UmitOzteker/ShooterGame)
+![GitHub Issues](https://img.shields.io/github/issues/UmitOzteker/ShooterGame)
+![GitHub Last Commit](https://img.shields.io/github/last-commit/UmitOzteker/ShooterGame)
+![GitHub Commit Activity](https://img.shields.io/github/commit-activity/m/UmitOzteker/ShooterGame)
+![Project Status](https://img.shields.io/badge/Status-Learning%20Template-orange)
+
 
 This project is a **top-down shooter AI system** built with Unity, designed for developers who want to learn about AI movement, automatic shooting mechanics, enemy management, and health bar logic in game development.
 
